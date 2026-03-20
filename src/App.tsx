@@ -41,12 +41,15 @@ const FUN_MESSAGES = [
   "흰자가 단단해지고 있어요! ✨",
   "거의 다 왔습니다! ⏳",
   "맛있는 냄새가 여기까지 나요! 😋",
-  "최고의 계란이 탄생하기 직전! 🚀"
+  "최고의 계란이 탄생하기 직전! 🚀",
+  "아직이야",
+  "조금 더 기다려"
 ];
 
 // Sound URLs
 const ALARM_SOUND_URL = "https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3";
 const BOILING_SOUND_URL = "https://actions.google.com/sounds/v1/water/boiling_water.ogg";
+const FUN_SOUND_URL = "https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3";
 
 // Egg Icon Component for the Button
 const EggButtonIcon = ({ isFinished, doneness, isActive, size = 36 }: { isFinished: boolean; doneness: number; isActive: boolean; size?: number }) => {
@@ -213,7 +216,13 @@ export default function App() {
     if (isFinished) {
       setEggMessage("냠냠! 정말 맛있어 보여요! 🍴");
     } else if (!isActive) {
-      setEggMessage("타이머를 시작하면 요리가 시작돼요! 🍳");
+      // Fun sound before starting
+      if (!isMuted) {
+        const audio = new Audio(FUN_SOUND_URL);
+        audio.volume = 0.5;
+        audio.play().catch(() => {});
+      }
+      setEggMessage("안녕? 나를 삶아줘!");
     } else {
       const randomMsg = FUN_MESSAGES[Math.floor(Math.random() * FUN_MESSAGES.length)];
       setEggMessage(randomMsg);
@@ -331,13 +340,13 @@ export default function App() {
         <section className="absolute inset-0 md:relative md:h-full flex items-center justify-center bg-[#F0F7FF] overflow-hidden z-0">
           {/* Mobile Controls Overlay - Moved outside scaled container to fix positioning */}
           <div className="md:hidden fixed inset-x-0 top-4 z-40 px-6 pointer-events-none">
-            <div className="bg-white/50 backdrop-blur-md p-4 rounded-[2rem] border border-white/30 shadow-lg pointer-events-auto max-w-sm mx-auto flex flex-col gap-3">
-              <div className="space-y-3">
+            <div className="bg-white/50 backdrop-blur-md p-3 rounded-3xl border border-white/30 shadow-lg pointer-events-auto max-w-sm mx-auto flex flex-col gap-2">
+              <div className="space-y-2">
                 {/* Size Slider */}
                 <div className="space-y-1">
                   <div className="flex justify-between items-end">
-                    <label className="text-[9px] font-bold uppercase tracking-widest text-[#4A4238]/60">Weight</label>
-                    <span className="text-[9px] font-mono bg-[#4A4238] text-white px-2 py-0.5 rounded-full">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-[#4A4238]/60">Weight</label>
+                    <span className="text-lg font-black bg-[#4A4238] text-white px-2.5 py-0.5 rounded-full leading-none tracking-tighter">
                       {weight}g
                     </span>
                   </div>
@@ -349,15 +358,15 @@ export default function App() {
                     value={weight}
                     onChange={(e) => setWeight(parseInt(e.target.value))}
                     disabled={isActive || isFinished}
-                    className="w-full h-1 bg-[#4A4238]/10 rounded-full appearance-none cursor-pointer accent-[#D4A373] disabled:opacity-50"
+                    className="w-full h-1.5 bg-[#4A4238]/10 rounded-full appearance-none cursor-pointer accent-[#D4A373] disabled:opacity-50"
                   />
                 </div>
 
                 {/* Doneness Slider */}
                 <div className="space-y-1">
                   <div className="flex justify-between items-end">
-                    <label className="text-[9px] font-bold uppercase tracking-widest text-[#4A4238]/60">Doneness</label>
-                    <span className="text-[9px] font-mono bg-[#4A4238] text-white px-2 py-0.5 rounded-full">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-[#4A4238]/60">Doneness</label>
+                    <span className="text-lg font-black bg-[#4A4238] text-white px-2.5 py-0.5 rounded-full leading-none tracking-tighter">
                       {DONENESS_LEVELS[doneness].label}
                     </span>
                   </div>
@@ -369,18 +378,18 @@ export default function App() {
                     value={doneness}
                     onChange={(e) => setDoneness(parseInt(e.target.value))}
                     disabled={isActive || isFinished}
-                    className="w-full h-1 bg-[#4A4238]/10 rounded-full appearance-none cursor-pointer accent-[#D4A373] disabled:opacity-50"
+                    className="w-full h-1.5 bg-[#4A4238]/10 rounded-full appearance-none cursor-pointer accent-[#D4A373] disabled:opacity-50"
                   />
                 </div>
               </div>
 
               {/* Mobile Sound Toggle */}
-              <div className="flex justify-center pt-1">
+              <div className="flex justify-center">
                 <button 
                   onClick={() => setIsMuted(!isMuted)}
-                  className={`flex items-center gap-2 px-4 py-1.5 rounded-full transition-all text-[10px] font-bold uppercase tracking-widest ${isMuted ? 'bg-[#A89F91]/10 text-[#A89F91]' : 'bg-[#D4A373]/10 text-[#D4A373]'}`}
+                  className={`flex items-center gap-2 px-3 py-1 rounded-full transition-all text-[9px] font-bold uppercase tracking-widest ${isMuted ? 'bg-[#A89F91]/10 text-[#A89F91]' : 'bg-[#D4A373]/10 text-[#D4A373]'}`}
                 >
-                  {isMuted ? <BellOff size={14} /> : <Bell size={14} />}
+                  {isMuted ? <BellOff size={12} /> : <Bell size={12} />}
                   <span>{isMuted ? 'Muted' : 'Sound On'}</span>
                 </button>
               </div>
@@ -646,17 +655,18 @@ export default function App() {
               >
                 {isMuted ? <BellOff size={20} /> : <Bell size={20} />}
               </button>
-              
-              <div className="md:hidden">
-                {!isFinished && (
-                  <button
-                    onClick={resetTimer}
-                    className="p-2 rounded-full bg-white/80 shadow-sm text-[#4A4238]"
-                  >
-                    <RotateCcw size={16} />
-                  </button>
-                )}
-              </div>
+            </div>
+
+            {/* Mobile Reset Button - Moved to bottom-left corner */}
+            <div className="md:hidden fixed bottom-12 left-6 z-50">
+              {!isFinished && (
+                <button
+                  onClick={resetTimer}
+                  className="p-4 rounded-full bg-white/80 backdrop-blur-md shadow-xl text-[#4A4238] border border-white/40 active:scale-90 transition-transform"
+                >
+                  <RotateCcw size={20} />
+                </button>
+              )}
             </div>
           </div>
 
@@ -742,7 +752,7 @@ export default function App() {
 
       {/* Footer / Credits */}
       <footer className="fixed bottom-4 left-8 text-[10px] text-[#A89F91] uppercase tracking-widest hidden md:block">
-        Perfect Egg Timer v2.4
+        Perfect Egg Timer v2.7
       </footer>
     </div>
   );
