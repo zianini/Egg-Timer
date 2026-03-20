@@ -44,11 +44,12 @@ const FUN_MESSAGES = [
   "최고의 계란이 탄생하기 직전! 🚀"
 ];
 
-// Sound URL - A clean "ding" sound
+// Sound URLs
 const ALARM_SOUND_URL = "https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3";
+const BOILING_SOUND_URL = "https://www.soundjay.com/nature/sounds/boiling-water-01.mp3";
 
 // Egg Icon Component for the Button
-const EggButtonIcon = ({ isFinished, doneness, isActive }: { isFinished: boolean; doneness: number; isActive: boolean }) => {
+const EggButtonIcon = ({ isFinished, doneness, isActive, size = 36 }: { isFinished: boolean; doneness: number; isActive: boolean; size?: number }) => {
   const isSoftBoiled = doneness <= 1; // "흐르는 반숙" or "주르륵 반숙"
   
   return (
@@ -57,7 +58,7 @@ const EggButtonIcon = ({ isFinished, doneness, isActive }: { isFinished: boolean
       animate={isFinished ? { rotate: -25, y: 1 } : isActive ? { scale: [1, 1.03, 1] } : { rotate: 0, y: 0 }}
       transition={isActive ? { duration: 1.5, repeat: Infinity, ease: "easeInOut" } : {}}
     >
-      <svg width="36" height="36" viewBox="0 0 32 32">
+      <svg width={size} height={size} viewBox="0 0 32 32">
         {/* Egg Shape - Removed stroke to avoid "dots" */}
         <path 
           d="M16,4 C10,4 6,12 6,20 C6,26 10,30 16,30 C22,30 26,26 26,20 C26,12 22,4 16,4 Z" 
@@ -109,11 +110,25 @@ export default function App() {
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const messageTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const boilingAudioRef = useRef<HTMLAudioElement | null>(null);
 
   // Initialize Audio
   useEffect(() => {
     audioRef.current = new Audio(ALARM_SOUND_URL);
+    
+    const boilingAudio = new Audio(BOILING_SOUND_URL);
+    boilingAudio.loop = true;
+    boilingAudioRef.current = boilingAudio;
   }, []);
+
+  // Handle Boiling Sound
+  useEffect(() => {
+    if (isActive && !isMuted && !isFinished) {
+      boilingAudioRef.current?.play().catch(e => console.log("Boiling sound blocked", e));
+    } else {
+      boilingAudioRef.current?.pause();
+    }
+  }, [isActive, isMuted, isFinished]);
 
   // Load preferences
   useEffect(() => {
@@ -218,12 +233,12 @@ export default function App() {
 
   return (
     <div className="h-screen bg-[#FDFBF7] text-[#4A4238] font-sans selection:bg-blue-100/50 overflow-hidden antialiased select-none">
-      <main className="max-w-6xl mx-auto h-screen flex flex-col md:grid md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-[#E8E2D9] relative">
+      <main className="max-w-6xl mx-auto h-screen flex flex-col md:grid md:grid-cols-3 md:divide-x divide-[#E8E2D9] relative overflow-hidden">
         
-        {/* Left Section: Controls */}
-        <section className="p-4 md:p-8 flex flex-col justify-center space-y-4 md:space-y-8 order-3 md:order-1 relative z-20 bg-[#FDFBF7]/90 md:bg-transparent backdrop-blur-md md:backdrop-blur-none">
-          <div className="space-y-4 md:space-y-6">
-            <div className="hidden md:flex justify-between items-center">
+        {/* Left Section: Controls (Desktop Only) */}
+        <section className="hidden md:flex p-8 flex-col justify-center space-y-8 relative z-20 bg-transparent">
+          <div className="space-y-6">
+            <div className="flex justify-between items-center">
               <h2 className="text-xs uppercase tracking-widest font-semibold text-[#A89F91] flex items-center gap-2">
                 <Egg size={14} /> Egg Configuration
               </h2>
@@ -232,14 +247,14 @@ export default function App() {
             <div className="flex flex-col gap-4">
               {/* Preset Buttons */}
               <div className="space-y-2">
-                <label className="text-[10px] md:text-sm font-medium uppercase tracking-wider">크기 프리셋</label>
+                <label className="text-sm font-medium uppercase tracking-wider">크기 프리셋</label>
                 <div className="flex flex-wrap gap-2">
                   {EGG_PRESETS.map((preset) => (
                     <button
                       key={preset.id}
                       onClick={() => setWeight(preset.weight)}
                       disabled={isActive || isFinished}
-                      className={`px-3 py-1.5 rounded-lg text-[10px] md:text-xs font-medium transition-all border ${
+                      className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all border ${
                         weight === preset.weight
                           ? 'bg-[#D4A373] text-white border-[#D4A373]'
                           : 'bg-white text-[#4A4238] border-[#E8E2D9] hover:border-[#D4A373]'
@@ -252,9 +267,9 @@ export default function App() {
               </div>
 
               {/* Size Slider */}
-              <div className="space-y-2 md:space-y-3">
+              <div className="space-y-3">
                 <div className="flex justify-between items-end">
-                  <label className="text-[10px] md:text-sm font-medium uppercase tracking-wider">크기 조절 (무게)</label>
+                  <label className="text-sm font-medium uppercase tracking-wider">크기 조절 (무게)</label>
                   <span className="text-[10px] font-mono bg-[#E8E2D9] px-1.5 py-0.5 rounded">
                     {weight}g
                   </span>
@@ -272,9 +287,9 @@ export default function App() {
               </div>
 
               {/* Doneness Slider */}
-              <div className="space-y-2 md:space-y-3">
+              <div className="space-y-3">
                 <div className="flex justify-between items-end">
-                  <label className="text-[10px] md:text-sm font-medium uppercase tracking-wider">익힘 정도</label>
+                  <label className="text-sm font-medium uppercase tracking-wider">익힘 정도</label>
                   <span className="text-[10px] font-mono bg-[#E8E2D9] px-1.5 py-0.5 rounded">
                     {DONENESS_LEVELS[doneness].label}
                   </span>
@@ -295,14 +310,14 @@ export default function App() {
             <button
               onClick={savePreferences}
               disabled={isActive || isFinished}
-              className="w-full py-2 md:py-3 px-4 rounded-xl border border-[#D4A373] text-[#D4A373] text-[10px] md:text-sm font-medium flex items-center justify-center gap-2 hover:bg-[#D4A373] hover:text-white transition-all active:scale-[0.98] disabled:opacity-30"
+              className="w-full py-3 px-4 rounded-xl border border-[#D4A373] text-[#D4A373] text-sm font-medium flex items-center justify-center gap-2 hover:bg-[#D4A373] hover:text-white transition-all active:scale-[0.98] disabled:opacity-30"
             >
               {isSaved ? <Check size={14} /> : <Save size={14} />}
               {isSaved ? '저장됨' : '설정 저장하기'}
             </button>
           </div>
 
-          <div className="hidden md:flex bg-[#FFF4E0] p-4 rounded-2xl border border-[#FFE4B5] gap-3 items-start">
+          <div className="bg-[#FFF4E0] p-4 rounded-2xl border border-[#FFE4B5] gap-3 flex items-start">
             <Info className="text-[#D4A373] shrink-0 mt-0.5" size={18} />
             <p className="text-[11px] leading-relaxed text-[#8B7355]">
               <strong className="block mb-1">끓는 물에서 시작하세요!</strong>
@@ -312,8 +327,8 @@ export default function App() {
           </div>
         </section>
 
-        {/* Center Section: Visualization */}
-        <section className="absolute inset-0 md:relative md:h-full flex items-center justify-center bg-[#F0F7FF] md:bg-[#F0F7FF] overflow-hidden order-2 md:order-2 z-0">
+        {/* Center Section: Visualization & Mobile Controls */}
+        <section className="absolute inset-0 md:relative md:h-full flex items-center justify-center bg-[#F0F7FF] overflow-hidden z-0">
           {/* Boiling Water Background Effect */}
           <div className="absolute inset-0 pointer-events-none overflow-hidden">
             {isActive && [1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
@@ -342,8 +357,53 @@ export default function App() {
             ))}
           </div>
           
-          <div className="relative scale-125 md:scale-100 opacity-30 md:opacity-100">
-            {/* Speech Bubble - Moved outside shaking div to reduce text shaking */}
+          <div className="relative scale-110 md:scale-100">
+            {/* Mobile Controls Overlay */}
+            <div className="md:hidden absolute inset-x-0 -top-28 z-30 space-y-6 px-6">
+              <div className="space-y-4 bg-white/30 backdrop-blur-md p-4 rounded-3xl border border-white/20 shadow-sm">
+                {/* Size Slider */}
+                <div className="space-y-1">
+                  <div className="flex justify-between items-end">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-[#4A4238]/60">Egg Weight</label>
+                    <span className="text-[10px] font-mono bg-[#4A4238] text-white px-1.5 py-0.5 rounded-full">
+                      {weight}g
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min="35"
+                    max="85"
+                    step="1"
+                    value={weight}
+                    onChange={(e) => setWeight(parseInt(e.target.value))}
+                    disabled={isActive || isFinished}
+                    className="w-full h-1 bg-[#4A4238]/10 rounded-full appearance-none cursor-pointer accent-[#D4A373] disabled:opacity-50"
+                  />
+                </div>
+
+                {/* Doneness Slider */}
+                <div className="space-y-1">
+                  <div className="flex justify-between items-end">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-[#4A4238]/60">Doneness</label>
+                    <span className="text-[10px] font-mono bg-[#4A4238] text-white px-1.5 py-0.5 rounded-full">
+                      {DONENESS_LEVELS[doneness].label}
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min="0"
+                    max={DONENESS_LEVELS.length - 1}
+                    step="1"
+                    value={doneness}
+                    onChange={(e) => setDoneness(parseInt(e.target.value))}
+                    disabled={isActive || isFinished}
+                    className="w-full h-1 bg-[#4A4238]/10 rounded-full appearance-none cursor-pointer accent-[#D4A373] disabled:opacity-50"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Speech Bubble */}
             <AnimatePresence>
               {eggMessage && (
                 <motion.div 
@@ -517,81 +577,150 @@ export default function App() {
         </section>
 
         {/* Right Section: Timer & Status */}
-        <section className="p-4 md:p-8 flex flex-col justify-center items-center space-y-4 md:space-y-8 order-1 md:order-3 relative z-20 bg-[#FDFBF7]/70 md:bg-transparent backdrop-blur-md md:backdrop-blur-none">
-          <div className="absolute top-4 right-4 md:top-8 md:right-8">
-            <button 
-              onClick={() => setIsMuted(!isMuted)}
-              className="p-2 rounded-full hover:bg-[#E8E2D9] transition-colors text-[#A89F91]"
-            >
-              {isMuted ? <BellOff size={18} /> : <Bell size={18} />}
-            </button>
-          </div>
-          <div className="text-center space-y-1">
-            <h2 className="text-[10px] md:text-xs uppercase tracking-widest font-semibold text-[#A89F91]">
-              {isFinished ? "Cooking Complete!" : "Remaining Time"}
-            </h2>
-            <motion.div 
-              className={`text-5xl md:text-8xl font-light tracking-tighter tabular-nums ${isFinished ? 'text-[#D4A373]' : 'text-[#2D2823]'}`}
-              animate={isFinished ? { scale: [1, 1.05, 1] } : {}}
-              transition={{ duration: 0.5, repeat: Infinity }}
-            >
-              {formatTime(timeLeft)}
-            </motion.div>
-          </div>
+        <section className="p-6 md:p-8 flex flex-col justify-between md:justify-center items-center relative z-20 md:bg-transparent pointer-events-none">
+          <div className="w-full flex justify-between items-start pointer-events-auto">
+            {/* Mobile Bottom-Center: Timer & Start Button */}
+            <div className="md:hidden fixed bottom-32 left-1/2 -translate-x-1/2 z-50 flex items-center gap-4 bg-white/80 backdrop-blur-xl p-3.5 pl-6 rounded-full border border-white/40 shadow-2xl">
+              <div className="flex flex-col">
+                <span className="text-[8px] font-bold uppercase tracking-widest text-[#A89F91]">Time</span>
+                <span className={`text-3xl font-black tabular-nums tracking-tighter leading-none ${isFinished ? 'text-[#D4A373]' : 'text-[#2D2823]'}`}>
+                  {formatTime(timeLeft)}
+                </span>
+              </div>
+              
+              <div className="h-10 w-[1px] bg-[#E8E2D9]" />
 
-          <div className="flex items-center gap-4">
-            <button
-              onClick={toggleTimer}
-              className={`w-16 h-16 md:w-20 md:h-20 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg relative ${
-                isActive 
-                ? 'bg-[#4A4238] text-white hover:bg-[#2D2823]' 
-                : 'bg-[#D4A373] text-white hover:bg-[#BC8A5F]'
-              }`}
-            >
-              <EggButtonIcon isFinished={isFinished} doneness={doneness} isActive={isActive} />
-            </button>
-            
-            {!isFinished && (
               <button
-                onClick={resetTimer}
-                className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-[#E8E2D9] text-[#4A4238] flex items-center justify-center hover:bg-[#DCD4C9] transition-colors"
-                title="Reset"
+                onClick={toggleTimer}
+                className="relative w-14 h-14 rounded-full flex items-center justify-center overflow-hidden group"
               >
-                <RotateCcw size={20} md:size={24} />
+                {/* Progress Ring Background */}
+                <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 48 48">
+                  <circle
+                    cx="24"
+                    cy="24"
+                    r="21"
+                    fill="none"
+                    stroke="#E8E2D9"
+                    strokeWidth="3"
+                  />
+                  <motion.circle
+                    cx="24"
+                    cy="24"
+                    r="21"
+                    fill="none"
+                    stroke="#D4A373"
+                    strokeWidth="3"
+                    strokeDasharray="131.9"
+                    animate={{ strokeDashoffset: 131.9 - (131.9 * progress) }}
+                    transition={{ duration: 0.5 }}
+                  />
+                </svg>
+                <div className={`relative z-10 w-10 h-10 rounded-full flex items-center justify-center transition-colors ${isActive ? 'bg-[#4A4238] text-white' : 'bg-[#D4A373] text-white'}`}>
+                  <EggButtonIcon isFinished={isFinished} doneness={doneness} isActive={isActive} size={24} />
+                </div>
               </button>
-            )}
+            </div>
+
+            <div className="hidden md:block">
+              <h1 className="text-sm font-black uppercase tracking-tighter text-[#4A4238]">Egg Timer</h1>
+            </div>
+
+            <div className="flex flex-col items-end gap-2">
+              <button 
+                onClick={() => setIsMuted(!isMuted)}
+                className="p-2.5 rounded-full bg-white/80 md:bg-transparent shadow-sm md:shadow-none hover:bg-[#E8E2D9] transition-colors text-[#A89F91]"
+              >
+                {isMuted ? <BellOff size={20} /> : <Bell size={20} />}
+              </button>
+              
+              <div className="md:hidden">
+                {!isFinished && (
+                  <button
+                    onClick={resetTimer}
+                    className="p-2 rounded-full bg-white/80 shadow-sm text-[#4A4238]"
+                  >
+                    <RotateCcw size={16} />
+                  </button>
+                )}
+              </div>
+            </div>
           </div>
 
-          <div className="w-full max-w-xs space-y-2 md:space-y-4">
-            <div className="flex justify-between text-[8px] md:text-[10px] uppercase tracking-wider font-bold text-[#A89F91]">
-              <span>Cooking Progress</span>
-              <span>{Math.round(progress * 100)}%</span>
-            </div>
-            <div className="h-1 w-full bg-[#E8E2D9] rounded-full overflow-hidden">
+          {/* Desktop Timer Center */}
+          <div className="hidden md:block text-center relative py-12 md:py-0">
+            <div className="relative z-10">
+              <h2 className="text-[10px] md:text-xs uppercase tracking-[0.2em] font-bold text-[#A89F91] mb-1">
+                {isFinished ? "Cooking Complete!" : "Remaining Time"}
+              </h2>
               <motion.div 
-                className={`h-full ${isFinished ? 'bg-[#D4A373]' : 'bg-[#D4A373]'}`}
-                initial={{ width: 0 }}
-                animate={{ width: `${progress * 100}%` }}
-                transition={{ duration: 0.5 }}
-              />
+                className={`text-7xl md:text-8xl font-black tracking-tighter tabular-nums ${isFinished ? 'text-[#D4A373]' : 'text-[#2D2823]'}`}
+                animate={isFinished ? { scale: [1, 1.05, 1] } : {}}
+                transition={{ duration: 0.5, repeat: Infinity }}
+              >
+                {formatTime(timeLeft)}
+              </motion.div>
             </div>
-            
-            <div className="pt-2 flex items-center justify-center gap-2 text-[#D4A373]">
-              {isActive ? (
-                <motion.div
-                  animate={{ opacity: [0.4, 1, 0.4] }}
-                  transition={{ duration: 1.5, repeat: Infinity }}
-                  className="flex items-center gap-2"
+          </div>
+
+          <div className="hidden md:flex flex-col items-center gap-6 md:gap-8 pointer-events-auto mb-24 md:mb-0">
+            <div className="flex items-center gap-4">
+              <button
+                onClick={toggleTimer}
+                className={`w-20 h-20 md:w-20 md:h-20 rounded-full flex items-center justify-center transition-all duration-300 shadow-xl relative ${
+                  isActive 
+                  ? 'bg-[#4A4238] text-white' 
+                  : 'bg-[#D4A373] text-white'
+                }`}
+              >
+                <EggButtonIcon isFinished={isFinished} doneness={doneness} isActive={isActive} />
+              </button>
+              
+              {!isFinished && (
+                <button
+                  onClick={resetTimer}
+                  className="w-14 h-14 md:w-14 md:h-14 rounded-full bg-white md:bg-[#E8E2D9] text-[#4A4238] flex items-center justify-center shadow-md md:shadow-none hover:bg-[#DCD4C9] transition-colors"
+                  title="Reset"
                 >
-                  <Flame size={14} />
-                  <span className="text-[10px] font-medium italic">맛있게 익어가는 중...</span>
-                </motion.div>
-              ) : isFinished ? (
-                <div className="flex items-center gap-2 text-[#D4A373]">
-                  <Check size={14} />
-                  <span className="text-[10px] font-bold uppercase tracking-widest">완성되었습니다!</span>
+                  <RotateCcw size={24} />
+                </button>
+              )}
+            </div>
+
+            <div className="w-full max-w-xs space-y-4">
+              {/* Desktop Progress Bar */}
+              <div className="hidden md:block space-y-4">
+                <div className="flex justify-between text-[10px] uppercase tracking-wider font-bold text-[#A89F91]">
+                  <span>Cooking Progress</span>
+                  <span>{Math.round(progress * 100)}%</span>
                 </div>
-              ) : null}
+                <div className="h-1 w-full bg-[#E8E2D9] rounded-full overflow-hidden">
+                  <motion.div 
+                    className="h-full bg-[#D4A373]"
+                    initial={{ width: 0 }}
+                    animate={{ width: `${progress * 100}%` }}
+                    transition={{ duration: 0.5 }}
+                  />
+                </div>
+              </div>
+              
+              <div className="flex items-center justify-center gap-2 text-[#D4A373]">
+                {isActive ? (
+                  <motion.div
+                    animate={{ opacity: [0.4, 1, 0.4] }}
+                    transition={{ duration: 1.5, repeat: Infinity }}
+                    className="flex items-center gap-2"
+                  >
+                    <Flame size={14} />
+                    <span className="text-[10px] font-bold uppercase tracking-widest italic">Cooking...</span>
+                  </motion.div>
+                ) : isFinished ? (
+                  <div className="flex items-center gap-2 text-[#D4A373]">
+                    <Check size={14} />
+                    <span className="text-[10px] font-bold uppercase tracking-widest">Done!</span>
+                  </div>
+                ) : null}
+              </div>
             </div>
           </div>
         </section>
@@ -600,7 +729,7 @@ export default function App() {
 
       {/* Footer / Credits */}
       <footer className="fixed bottom-6 left-8 text-[10px] text-[#A89F91] uppercase tracking-widest">
-        Perfect Egg Timer v1.7
+        Perfect Egg Timer v2.0
       </footer>
     </div>
   );
