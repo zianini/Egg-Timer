@@ -29,7 +29,7 @@ const DONENESS_LEVELS = [
   { label: '완벽한 반숙', time: 450 },
   { label: '쫀득한 반숙', time: 480 }, 
   { label: '반완숙', time: 540 }, 
-  { label: '부드러운 완숙', time: 630 }, 
+  { label: '말랑한 완숙', time: 630 }, 
   { label: '단단한 완숙', time: 720 }, 
 ];
 
@@ -338,15 +338,22 @@ export default function App() {
 
         {/* Center Section: Visualization & Mobile Controls */}
         <section className="absolute inset-0 md:relative md:h-full flex items-center justify-center bg-[#F0F7FF] overflow-hidden z-0">
-          {/* Mobile Controls Overlay - Moved outside scaled container to fix positioning */}
-          <div className="md:hidden fixed inset-x-0 top-4 z-40 px-6 pointer-events-none">
-            <div className="bg-white/50 backdrop-blur-md p-3 rounded-3xl border border-white/30 shadow-lg pointer-events-auto max-w-sm mx-auto flex flex-col gap-2">
-              <div className="space-y-2">
+          {/* Mobile Controls Overlay - Top Bar Style */}
+          <div className="md:hidden fixed inset-x-0 top-0 z-40 pointer-events-none">
+            <div className="bg-white/80 backdrop-blur-xl p-3 pt-6 rounded-b-[2rem] border-b border-white/30 shadow-xl pointer-events-auto flex flex-col gap-2">
+              <div className="flex items-center justify-center gap-2 mb-1">
+                <div className="flex items-center gap-1.5 bg-[#D4A373]/10 px-3 py-1 rounded-full">
+                  <span className="text-[10px] font-bold text-[#D4A373] animate-pulse">TIP</span>
+                  <span className="text-[10px] font-bold text-[#4A4238]">끓는 물에서 시작하세요! ♨️</span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4 px-2">
                 {/* Size Slider */}
                 <div className="space-y-1">
                   <div className="flex justify-between items-end">
-                    <label className="text-[10px] font-bold uppercase tracking-widest text-[#4A4238]/60">Weight</label>
-                    <span className="text-lg font-black bg-[#4A4238] text-white px-2.5 py-0.5 rounded-full leading-none tracking-tighter">
+                    <label className="text-[9px] font-bold uppercase tracking-widest text-[#4A4238]/60">Weight</label>
+                    <span className="text-sm font-black bg-[#4A4238] text-white px-2 py-0.5 rounded-full leading-none">
                       {weight}g
                     </span>
                   </div>
@@ -365,8 +372,8 @@ export default function App() {
                 {/* Doneness Slider */}
                 <div className="space-y-1">
                   <div className="flex justify-between items-end">
-                    <label className="text-[10px] font-bold uppercase tracking-widest text-[#4A4238]/60">Doneness</label>
-                    <span className="text-lg font-black bg-[#4A4238] text-white px-2.5 py-0.5 rounded-full leading-none tracking-tighter">
+                    <label className="text-[9px] font-bold uppercase tracking-widest text-[#4A4238]/60">Doneness</label>
+                    <span className="text-sm font-black bg-[#4A4238] text-white px-2 py-0.5 rounded-full leading-none">
                       {DONENESS_LEVELS[doneness].label}
                     </span>
                   </div>
@@ -389,7 +396,7 @@ export default function App() {
                   onClick={() => setIsMuted(!isMuted)}
                   className={`flex items-center gap-2 px-3 py-1 rounded-full transition-all text-[9px] font-bold uppercase tracking-widest ${isMuted ? 'bg-[#A89F91]/10 text-[#A89F91]' : 'bg-[#D4A373]/10 text-[#D4A373]'}`}
                 >
-                  {isMuted ? <BellOff size={12} /> : <Bell size={12} />}
+                  {isMuted ? <BellOff size={10} /> : <Bell size={10} />}
                   <span>{isMuted ? 'Muted' : 'Sound On'}</span>
                 </button>
               </div>
@@ -444,7 +451,7 @@ export default function App() {
               className="relative cursor-pointer"
               onClick={handleEggClick}
               animate={{ 
-                scale: getScale(weight),
+                scale: getScale(weight) * 0.75, // Calibrated for mobile/desktop real-size feel
                 rotate: isActive ? [0, -1.5 - (progress * 2), 1.5 + (progress * 2), -1.5 - (progress * 2), 1.5 + (progress * 2), 0] : 0,
                 x: isActive ? [0, -2 - (progress * 3), 2 + (progress * 3), -2 - (progress * 3), 2 + (progress * 3), 0] : 0,
                 y: isActive ? [0, -1 - (progress * 2), 1 + (progress * 2), -1 - (progress * 2), 1 + (progress * 2), 0] : 0
@@ -752,7 +759,7 @@ export default function App() {
 
       {/* Footer / Credits */}
       <footer className="fixed bottom-4 left-8 text-[10px] text-[#A89F91] uppercase tracking-widest hidden md:block">
-        Perfect Egg Timer v2.7
+        Perfect Egg Timer v3.1
       </footer>
     </div>
   );
